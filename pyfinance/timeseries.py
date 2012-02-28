@@ -71,26 +71,24 @@ class TickTimeSeries(TimeSeries):
     # attempt to create a table
     try :
       db.execute("CREATE TABLE ticklist(tick_id)")
-      db.execute("CREATE TABLE tickdata(tick_id,date,open_v,high_v,\
-          low_v,close_v)")
+      db.execute("CREATE TABLE tickdata(tick_id, date, open_v, high_v,\
+          low_v, close_v, volume)")
+      db.execute("CREATE UNIQUE INDEX tick_idx on tickdata(tick_id, date)")
+      db.execute("CREATE UNIQUE INDEX data_idx on tickdata(tick_id, date)")
     except sqlite3.OperationalError:
       pass
     
     # insert tick_id to ticklist
-    rowid = db.execute("SELECT rowid from ticklist where tick_id = '%s'" % \
-        self.tick_id).fetchone()
-    if rowid == None:
-      db.execute("INSERT INTO ticklist(tick_id) VALUES('%s')"%(self.tick_id))
+    sql_cmd = "insert or replace into ticklist values (?)"
+    db.execute(sql_cmd, (self.tick_id,))
     
+    sql_cmd = """insert or replace into tickdata(tick_id, date, open_v,
+    high_v, low_v, close_v, volume) values (?, ?, ?, ?, ?, ?, ?)"""
+    print sql_cmd
     for s in self:
-      # first delete duplicate data
-      db.execute("DELETE FROM tickdata WHERE tick_id = '%s' AND date = '%s'" \
-          % (self.tick_id,str(s[0])))
       # insert data
-      sql_cmd = "INSERT INTO tickdata(tick_id,date,open_v,high_v,low_v,close_v)\
-          VALUES ('%s', '%s', %f, %f, %f, %f)" % (self.tick_id,str(s[0]),\
-          s[1][0],s[1][1],s[1][2],s[1][3])
-      db.execute(sql_cmd)
+      db.execute(sql_cmd, (self.tick_id, str(s[0]), s[1][0], s[1][1], 
+          s[1][2], s[1][3], s[1][4]))
 
     # finalize
     db.commit()
