@@ -1,7 +1,12 @@
 ﻿# -*- coding: utf-8 -*-
 
-nikkei225_str = """
-#水産関連の日経225採用銘柄
+import cStringIO
+import codecs
+
+bom_utf8 = unicode(codecs.BOM_UTF8, "utf-8")
+
+nikkei225_string = """
+水産関連の日経225採用銘柄
 1332 日本水産株式会社
 #鉱業関連の日経225採用銘柄
 1601 国際石油開発帝石ホールディングス株式会社
@@ -263,3 +268,33 @@ nikkei225_str = """
 4689 ヤフー株式会社 
 4795 スカパーJSAT株式会社 
 """
+
+def _parseTickList(ticklist_fp):
+    Industry_Type = []
+    Tick_Codes = {}
+    i = -1
+    
+    for line in ticklist_fp:
+        line = unicode(line.strip(), "utf-8")
+
+        if len(line) == 0:
+            continue
+
+        if line[0] in bom_utf8:
+            line = line[1:]
+
+        if line[0] == "#":
+            Industry_Type.append((line[1:],[]))
+            i = i + 1
+        elif line[0] in "0123456789":
+            splt = line.split()
+            tick_id = int(splt[0])
+            company_name = splt[1]
+            Tick_Codes[tick_id] = company_name
+            Industry_Type[i][1].append(tick_id)
+    
+    return Industry_Type, Tick_Codes
+    
+def getNikkei225():
+    nikkei225_fp = cStringIO.StringIO(nikkei225_string)
+    return _parseTickList(nikkei225_fp)
