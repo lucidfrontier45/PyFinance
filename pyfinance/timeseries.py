@@ -94,22 +94,37 @@ class TickTimeSeries(TimeSeries):
     db.commit()
     db.close()
 
-def getTickIDs(db_name):
+def getTickIDsFromSQL(db_name):
     db = sqlite3.connect(db_name)
     ids = db.execute("SELECT tick_id FROM ticklist").fetchall()
     db.close()
     return ids
 
-def readFromSQL(db_name,tick_id):
+def getTickDataFromSQL(db_name,tick_id, begin_date=None, end_date=None):
     # get data from sqlite database
     db = sqlite3.connect(db_name)
-    iid = db.execute("SELECT tick_id FROM ticklist where tick_id = '%s'"\
-        %tick_id).fetchone()
+    
+    # first check if the requested tick_id exists
+    sql_cmd = "select tick_id from ticklist where tick_id=?"
+    iid = db.execute(sql_cmd,(tick_id,)).fetchone()
     if iid == None:
       db.close()
       raise TickerCodeError, "Ticker Code %s not found" % tick_id
-    res = db.execute("SELECT * FROM tickdata WHERE tick_id = '%s'" % \
-        tick_id).fetchall()
+
+    # get tick data
+    sql_cmd = "select * from tickdata where tick_id=?"
+    query_values = [tick_id]
+
+    if begin_date:
+        sql_cmd += " and date >= ?"
+        query_values.append(str(begin_date))
+
+    if end_date:
+        sql_cmd += " and date <= ?"
+        query_values.append(str(end_date))
+
+    # execute sql command
+    res = db.execute(sql_cmd, query_values).fetchall()
     db.close()
 
     # create a TickTimeSeries
