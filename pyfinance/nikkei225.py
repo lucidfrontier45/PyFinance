@@ -6,7 +6,7 @@ import codecs
 bom_utf8 = unicode(codecs.BOM_UTF8, "utf-8")
 
 nikkei225_string = """
-水産関連の日経225採用銘柄
+#水産関連の日経225採用銘柄
 1332 日本水産株式会社
 #鉱業関連の日経225採用銘柄
 1601 国際石油開発帝石ホールディングス株式会社
