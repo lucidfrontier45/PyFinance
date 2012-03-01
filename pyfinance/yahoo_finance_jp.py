@@ -61,12 +61,12 @@ def getTick(code,end_date=None,start_date=None,length=500):
     ts = [[],[]] # an array to store the result, [list_dates,list_prices]
     niter = 0 # iteration counter
     while(niter < length) :
-        print niter
+        #print niter
 
         # prepare BeautifulSoup object
         url_t = "http://table.yahoo.co.jp/t?s=%s&a=%s&b=%s&c=%s&d=%s&e=%s&f=%s&g=d&q=t&y=%d&z=%s&x=.csv" \
         % (code, start_m, start_d, start_y, end_m, end_d, end_y,niter,code)
-        print url_t
+        #print url_t
         url_data = unicode(urllib2.urlopen(url_t).read(), enc, 'ignore')
         soup = BeautifulSoup(url_data)
 

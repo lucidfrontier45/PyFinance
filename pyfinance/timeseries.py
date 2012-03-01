@@ -97,6 +97,7 @@ class TickTimeSeries(TimeSeries):
 def getTickIDsFromSQL(db_name):
     db = sqlite3.connect(db_name)
     ids = db.execute("SELECT tick_id FROM ticklist").fetchall()
+    ids = [i[0] for i in ids]
     db.close()
     return ids
 
