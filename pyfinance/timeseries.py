@@ -84,7 +84,7 @@ class TickTimeSeries(TimeSeries):
         
         sql_cmd = """insert or replace into tickdata(tick_id, date, open_v,
         high_v, low_v, close_v, volume) values (?, ?, ?, ?, ?, ?, ?)"""
-        print sql_cmd
+        #print sql_cmd
         for s in self:
             # insert data
             db.execute(sql_cmd, (self.tick_id, str(s[0]), s[1][0], s[1][1], 
