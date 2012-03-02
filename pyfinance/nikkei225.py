@@ -12,25 +12,25 @@ nikkei225_string = """
 1601 国際石油開発帝石ホールディングス株式会社
 #建設関連の日経225採用銘柄
 1721 コムシスホールディングス株式会社
-1801 大成建設株式会社 
+1801 大成建設株式会社
 1802 株式会社大林組
 1803 清水建設株式会社
-1812 鹿島建設株式会社 
-1861 株式会社熊谷組 
+1812 鹿島建設株式会社
+1861 株式会社熊谷組
 1925 大和ハウス工業株式会社
 1928 積水ハウス株式会社
 1963 日揮株式会社
 #食品関連の日経225採用銘柄
-2001 日本製粉株式会社 
-2002 株式会社日清製粉グループ本社 
-2202 明治製菓株式会社 
-2261 明治乳業株式会社 
-2282 日本ハム株式会社 
-2501 サッポロホールディングス株式会社 
-2502 アサヒビール株式会社 
-2503 キリンホールディングス株式会社 
-2531 宝ホールディングス株式会社 
-2602 日清オイリオグループ株式会社 
+2001 日本製粉株式会社
+2002 株式会社日清製粉グループ本社
+2202 明治製菓株式会社
+2261 明治乳業株式会社
+2282 日本ハム株式会社
+2501 サッポロホールディングス株式会社
+2502 アサヒビール株式会社
+2503 キリンホールディングス株式会社
+2531 宝ホールディングス株式会社
+2602 日清オイリオグループ株式会社
 2768 双日株式会社 
 2779 株式会社三越 
 2801 キッコーマン株式会社 
@@ -269,11 +269,12 @@ nikkei225_string = """
 4795 スカパーJSAT株式会社 
 """
 
+
 def _parseTickList(ticklist_fp):
     Industry_Type = []
     Tick_Codes = {}
     i = -1
-    
+
     for line in ticklist_fp:
         line = unicode(line.strip(), "utf-8")
 
@@ -284,7 +285,7 @@ def _parseTickList(ticklist_fp):
             line = line[1:]
 
         if line[0] == "#":
-            Industry_Type.append((line[1:],[]))
+            Industry_Type.append((line[1:], []))
             i = i + 1
         elif line[0] in "0123456789":
             splt = line.split()
@@ -292,9 +293,10 @@ def _parseTickList(ticklist_fp):
             company_name = splt[1]
             Tick_Codes[tick_id] = company_name
             Industry_Type[i][1].append(tick_id)
-    
+
     return Industry_Type, Tick_Codes
-    
+
+
 def getNikkei225():
     nikkei225_fp = cStringIO.StringIO(nikkei225_string)
     return _parseTickList(nikkei225_fp)
