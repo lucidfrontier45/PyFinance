@@ -143,6 +143,28 @@ def getTickDataFromSQL(db_name, tick_id, begin_date=None, end_date=None):
 
     return TickTimeSeries(dates, data, tick_id)
 
+def getAllTickDataSQL(db_name, begin_date=None, end_date=None):
+    tick_ids = getTickIDsFromSQL(db_name)
+    tick_data = []
+    for tick_id in tick_ids:
+        try:
+            ts = getTickDataFromSQL(db_name, tick_id, begin_date, end_date)
+            tick_data.append(ts)
+        except:
+            pass
+        
+    min_len = min([len(ts) for ts in tick_data])
+    tick_ids = []
+    for i, ts in enumerate(tick_data):
+        ts_len = len(ts)
+        truncated_dates = ts.dates[ts_len - min_len:]
+        truncated_data = ts.data[ts_len - min_len:]
+        tick_id = ts.tick_id
+        truncated_ts = TickTimeSeries(truncated_dates, truncated_data, tick_id)
+        tick_data[i] = truncated_ts
+        tick_ids.append(tick_id)
+    
+    return tick_ids, tick_data
 
 def _str2date(s):
     """ convert strings to date object

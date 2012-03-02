@@ -6,7 +6,14 @@ Created on 2012/03/02
 
 import numpy as np
 from openopt import QP
+from . import indicators
 
+def prepareDataFromTimeSeries(tick_data, lag=1):
+    roc = np.array([indicators.roc(ts.data[:,3], lag) for ts in tick_data])
+    mu = np.mean(roc, 1)
+    cv = np.cov(roc)
+    return roc, mu, cv
+    
 
 def train_fixed_return(cv, mu, target_return=1.0, iprint=False):
     n_components = len(mu)
@@ -54,8 +61,11 @@ def getRiskFreeAsset(mu, solutions, risks=None, returns=None):
     n_solutions = len(solutions)
     intercepts = []
     for i in xrange(n_solutions - 1):
-        slope = (returns[i + 1] - returns[i]) / (risks[i + 1] / risks[i])
+        slope = (returns[i + 1] - returns[i]) / (risks[i + 1] - risks[i])
         intercept = slope * risks[i] - returns[i]
         intercepts.append(intercept)
 
-    return np.argmin(np.abs(intercept)), intercepts
+    return np.argmin(np.abs(intercepts)), intercepts
+
+def accumulateROC(roc):
+    return np.cumprod(roc/100.0 + 1.0)
