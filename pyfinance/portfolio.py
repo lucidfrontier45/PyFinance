@@ -74,12 +74,53 @@ def accumulateROC(roc):
     return np.cumprod(roc/100.0 + 1.0)
 
 
-def getRelaventTicks(sol, tick_ids):
-    tick_ids = np.asanyarray(tick_ids)
-    mask = sol.xf.round(2) > 0.0
-    return tick_ids[mask], sol.xf[mask].round(2)
+def _filteIrrelaventTicks(sol, round_precision=2):
+    rounded_weights = sol.xf.round(round_precision)
+    mask = rounded_weights > 0.0
+    return mask, rounded_weights[mask]
 
+def getRelaventTicks(sol, tick_ids, round_precision=2):
+    mask, relavent_weights = _filteIrrelaventTicks(sol, round_precision)
+    tick_ids = np.asanyarray(tick_ids)
+    relavent_ids = tick_ids[mask]
+    return relavent_ids, relavent_weights
 
 def normalizeWeight(weights):
     w = weights.round(2)
     return w / w.sum()
+
+def simulateReturn(sol, roc, round_precision=2, tick_ids=None, dates=None):
+    mask, relavent_weights = _filteIrrelaventTicks(sol, round_precision)
+    tick_ids = np.asanyarray(tick_ids)
+    relavent_roc = roc[mask]
+    
+    if not tick_ids == None:
+        relavent_ids = tick_ids[mask]
+        try:
+            from . import nikkei225
+            relavent_names = nikkei225.getNameFromID(relavent_ids)
+            for (name, weights) in zip(relavent_names, relavent_weights):
+                print "%s %2d%%" %(name, weights * 100)
+        except:
+            pass
+    
+    simulated_return = accumulateROC(np.dot(relavent_weights, relavent_roc))
+
+    if not dates == None:
+        try:
+            import matplotlib.pyplot as plt
+            plt.plot(dates, simulated_return, "x-", label="portfolio")
+            if not tick_ids == None:
+                for tick_id, roc in zip(relavent_ids, relavent_roc):
+                    simulated_return = accumulateROC(roc)
+                    plt.plot(dates, simulated_return, "-", label=str(tick_id))
+            plt.xlabel("date")
+            plt.ylabel("simulated_return")
+            plt.legend(loc="upper left")
+            plt.show()
+        except:
+            pass
+
+    return simulated_return
+
+

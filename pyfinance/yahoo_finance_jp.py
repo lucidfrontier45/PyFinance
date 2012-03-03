@@ -39,9 +39,16 @@ def _splitToTick(soup):
     max_v = float(_extractStr(soup.contents[5]))
     min_v = float(_extractStr(soup.contents[7]))
     close_v = float(_extractStr(soup.contents[9]))
-    volume = float(_extractStr(soup.contents[11]))
-
-    return date, [open_v, max_v, min_v, close_v, volume]
+    data = [open_v, max_v, min_v, close_v]    
+    
+    #if volume is exist, append it
+    try:    
+        volume = float(_extractStr(soup.contents[11]))
+        data.append(volume)
+    except:
+        pass
+        
+    return date, data
 
 
 def getTick(code, end_date=None, start_date=None, length=500):

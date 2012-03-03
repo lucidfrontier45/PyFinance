@@ -264,6 +264,9 @@ nikkei225_string = """
 5301 東海カーボン
 5332 TOTO
 5333 日本ガイシ
+#総合指標
+998407 日経平均株価
+USDJPY=X　米ドル
 """
 
 
@@ -285,13 +288,16 @@ def _parseTickList(ticklist_str):
         if line[0] == "#":
             Industry_Type.append((line[1:], []))
             i = i + 1
-        elif line[0] in "0123456789":
-            splt = line.split()
-            tick_id = int(splt[0])
-            company_name = splt[1]
-            Tick_Codes[tick_id] = company_name
-            Industry_Type[i][1].append(tick_id)
-
+        else:
+            try:
+                splt = line.split()
+                tick_id = int(splt[0])
+                company_name = splt[1]
+                Tick_Codes[tick_id] = company_name
+                Industry_Type[i][1].append(tick_id)
+            except:
+                pass
+            
     return Industry_Type, Tick_Codes
 
 

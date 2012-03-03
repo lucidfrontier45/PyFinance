@@ -162,6 +162,7 @@ def getAllTickDataSQL(db_name, begin_date=None, end_date=None):
         tick_id = ts.tick_id
         truncated_ts = TickTimeSeries(truncated_dates, truncated_data, tick_id)
         tick_data[i] = truncated_ts
+        tick_data[i].sort()
         tick_ids.append(tick_id)
     
     return tick_ids, tick_data
