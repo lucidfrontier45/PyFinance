@@ -300,3 +300,9 @@ def _parseTickList(ticklist_fp):
 def getNikkei225():
     nikkei225_fp = cStringIO.StringIO(nikkei225_string)
     return _parseTickList(nikkei225_fp)
+
+tick_codes = getNikkei225()[1]
+
+def getNameFromID(tick_ids):
+    tick_names = [tick_codes[tick_id] for tick_id in tick_ids]
+    return tick_names

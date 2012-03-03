@@ -123,12 +123,12 @@ def getTickDataFromSQL(db_name, tick_id, begin_date=None, end_date=None):
     query_values = [tick_id]
 
     if begin_date:
-            sql_cmd += " and date >= ?"
-            query_values.append(str(begin_date))
+        sql_cmd += " and date >= ?"
+        query_values.append(str(begin_date))
 
     if end_date:
-            sql_cmd += " and date <= ?"
-            query_values.append(str(end_date))
+        sql_cmd += " and date <= ?"
+        query_values.append(str(end_date))
 
     # execute sql command
     res = db.execute(sql_cmd, query_values).fetchall()
