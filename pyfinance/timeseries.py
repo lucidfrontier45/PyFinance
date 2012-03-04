@@ -107,7 +107,7 @@ def getTickIDsFromSQL(db_name):
     return ids
 
 
-def getTickDataFromSQL(db_name, tick_id, begin_date=None, end_date=None):
+def _getOneTickDataFromSQL(db_name, tick_id, begin_date=None, end_date=None):
     # get data from sqlite database
     db = sqlite3.connect(db_name)
 
@@ -143,12 +143,12 @@ def getTickDataFromSQL(db_name, tick_id, begin_date=None, end_date=None):
 
     return TickTimeSeries(dates, data, tick_id)
 
-def getAllTickDataSQL(db_name, begin_date=None, end_date=None):
-    tick_ids = getTickIDsFromSQL(db_name)
+def getTickDataSQL(db_name, tick_ids=[], begin_date=None, end_date=None):
+    if len(tick_ids) == 0: tick_ids = getTickIDsFromSQL(db_name)
     tick_data = []
     for tick_id in tick_ids:
         try:
-            ts = getTickDataFromSQL(db_name, tick_id, begin_date, end_date)
+            ts = _getOneTickDataFromSQL(db_name, tick_id, begin_date, end_date)
             tick_data.append(ts)
         except:
             pass
@@ -166,6 +166,25 @@ def getAllTickDataSQL(db_name, begin_date=None, end_date=None):
         tick_ids.append(tick_id)
     
     return tick_ids, tick_data
+
+
+def filterPeakedTickIDs(db_name, tick_ids=[], ratio=0.9,
+                        size=10, value_type="close_v"):
+    if len(tick_ids) == 0: tick_ids = getTickIDsFromSQL(db_name)
+    print tick_ids
+    db = sqlite3.connect(db_name)
+    maxval_cmd = "select max(%s) from tickdata where tick_id=?" % (value_type,)
+    general_cmd = "select %s from tickdata where tick_id=?" % (value_type,)
+    ret_ids = []
+    for tick_id in tick_ids:
+        max_val = db.execute(maxval_cmd, (tick_id,)).fetchone()[0]
+        values = db.execute(general_cmd, (tick_id,)).fetchmany(size)
+        print max_val, np.max(values)
+        if np.max(values) < max_val * ratio:
+            ret_ids.append(tick_id)
+    
+    return ret_ids
+    
 
 def _str2date(s):
     """ convert strings to date object
