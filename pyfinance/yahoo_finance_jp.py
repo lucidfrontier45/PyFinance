@@ -4,7 +4,7 @@ import re
 import datetime
 import urllib2
 from BeautifulSoup import BeautifulSoup
-from timeseries import TickTimeSeries, TickerCodeError
+from timeseries import TickTimeSeries, TickerCodeError, _str2date
 
 # yahoo finance jp uses currently EUC-JP encoding
 enc = "euc-jp"
@@ -59,9 +59,16 @@ def getTick(code, end_date=None, start_date=None, length=500):
     if end_date == None:
         # set default end_date = today
         end_date = datetime.date.today()
+    elif isinstance(end_date, str):
+        end_date = _str2date(end_date)
+        
     if start_date == None:
         # set default start_date = today - length * scale
         start_date = end_date - datetime.timedelta(days=length * scale)
+    elif isinstance(start_date, str):
+        start_date = _str2date(start_date)
+        length = (end_date - start_date).days
+        
     print "get data from %s to %s" % (start_date, end_date)
     start_m, start_d, start_y = start_date.month, \
             start_date.day, start_date.year

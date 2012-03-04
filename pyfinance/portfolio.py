@@ -99,10 +99,12 @@ def simulateReturn(sol, roc, round_precision=2, tick_ids=None, dates=None):
         try:
             from . import nikkei225
             relavent_names = nikkei225.getNameFromID(relavent_ids)
-            for (name, weights) in zip(relavent_names, relavent_weights):
-                print "%s %2d%%" %(name, weights * 100)
+            for (tick_id, name, weights) in zip(relavent_ids, 
+                    relavent_names, relavent_weights):
+                print "%s %s %2d%%" %(tick_id, name, weights * 100)
         except:
-            pass
+            for (tick_id, weights) in zip(relavent_ids, relavent_weights):
+                print "%s %s %2d%%" %(tick_id, weights * 100)
     
     simulated_return = accumulateROC(np.dot(relavent_weights, relavent_roc))
 

@@ -16,7 +16,7 @@ error_list = []
 
 for tick_id in tick_ids:
     try:
-        ticks = yf.getTick(tick_id,length=100)
+        ticks = yf.getTick(tick_id,length=1000)
         for _ in xrange(5):
             try:
                 ticks.dumpToSQL(db_name)
