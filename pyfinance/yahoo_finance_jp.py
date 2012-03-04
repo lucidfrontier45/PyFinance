@@ -39,14 +39,14 @@ def _splitToTick(soup):
     max_v = float(_extractStr(soup.contents[5]))
     min_v = float(_extractStr(soup.contents[7]))
     close_v = float(_extractStr(soup.contents[9]))
-    data = [open_v, max_v, min_v, close_v]    
     
-    #if volume is exist, append it
+    #if volume does not exist, use dummy value
     try:    
         volume = float(_extractStr(soup.contents[11]))
-        data.append(volume)
     except:
-        pass
+        volume = 0.0
+
+    data = [open_v, max_v, min_v, close_v, volume]    
         
     return date, data
 

@@ -112,8 +112,8 @@ def simulateReturn(sol, roc, round_precision=2, tick_ids=None, dates=None):
             plt.plot(dates, simulated_return, "x-", label="portfolio")
             if not tick_ids == None:
                 for tick_id, roc in zip(relavent_ids, relavent_roc):
-                    simulated_return = accumulateROC(roc)
-                    plt.plot(dates, simulated_return, "-", label=str(tick_id))
+                    sim_ret = accumulateROC(roc)
+                    plt.plot(dates, sim_ret, "-", label=str(tick_id))
             plt.xlabel("date")
             plt.ylabel("simulated_return")
             plt.legend(loc="upper left")
