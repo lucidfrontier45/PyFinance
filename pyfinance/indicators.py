@@ -2,6 +2,7 @@ import numpy as np
 
 
 def ts_diff(data, lag=1):
+    data = np.asanyarray(data)
     ddata = np.zeros_like(data)
     ddata[lag:] = data[lag:] - data[:-lag]
     return ddata

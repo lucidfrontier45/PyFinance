@@ -2,6 +2,7 @@ from copy import deepcopy
 import numpy as np
 import sqlite3
 import datetime
+from . import indicators
 
 
 class TickerCodeError(Exception):
@@ -107,7 +108,8 @@ def getTickIDsFromSQL(db_name):
     return ids
 
 
-def _getOneTickDataFromSQL(db_name, tick_id, begin_date=None, end_date=None):
+def _getOneTickDataFromSQL(db_name, tick_id, size=-1, 
+                           begin_date=None, end_date=None):
     # get data from sqlite database
     db = sqlite3.connect(db_name)
 
@@ -119,7 +121,7 @@ def _getOneTickDataFromSQL(db_name, tick_id, begin_date=None, end_date=None):
         raise TickerCodeError, "Ticker Code %s not found" % tick_id
 
     # get tick data
-    sql_cmd = "select * from tickdata where tick_id=?"
+    sql_cmd = "select * from tickdata where tick_id=? order by date desc"
     query_values = [tick_id]
 
     if begin_date:
@@ -131,9 +133,13 @@ def _getOneTickDataFromSQL(db_name, tick_id, begin_date=None, end_date=None):
         query_values.append(str(end_date))
 
     # execute sql command
-    res = db.execute(sql_cmd, query_values).fetchall()
+    cmd_res = db.execute(sql_cmd, query_values)
+    if size > 0:
+        res = cmd_res.fetchmany(size)
+    else:
+        res = cmd_res.fetchall()
     db.close()
-
+    
     # create a TickTimeSeries
     dates = []
     data = []
@@ -141,14 +147,19 @@ def _getOneTickDataFromSQL(db_name, tick_id, begin_date=None, end_date=None):
         dates.append(_str2date(r[1]))
         data.append(r[2:])
 
-    return TickTimeSeries(dates, data, tick_id)
-
-def getTickDataSQL(db_name, tick_ids=[], begin_date=None, end_date=None):
+    ts = TickTimeSeries(dates, data, tick_id)
+    ts.sort()
+    return ts
+    
+    
+def getTickDataFromSQL(db_name, tick_ids=[], size=-1,
+                       begin_date=None, end_date=None):
     if len(tick_ids) == 0: tick_ids = getTickIDsFromSQL(db_name)
     tick_data = []
     for tick_id in tick_ids:
         try:
-            ts = _getOneTickDataFromSQL(db_name, tick_id, begin_date, end_date)
+            ts = _getOneTickDataFromSQL(db_name, tick_id, size, 
+                                        begin_date, end_date)
             tick_data.append(ts)
         except:
             pass
@@ -171,16 +182,32 @@ def getTickDataSQL(db_name, tick_ids=[], begin_date=None, end_date=None):
 def filterPeakedTickIDs(db_name, tick_ids=[], ratio=0.9,
                         size=10, value_type="close_v"):
     if len(tick_ids) == 0: tick_ids = getTickIDsFromSQL(db_name)
-    print tick_ids
     db = sqlite3.connect(db_name)
     maxval_cmd = "select max(%s) from tickdata where tick_id=?" % (value_type,)
-    general_cmd = "select %s from tickdata where tick_id=?" % (value_type,)
+    general_cmd = "select %s from tickdata where tick_id=? order by date desc"\
+                                                                % (value_type,)
     ret_ids = []
     for tick_id in tick_ids:
         max_val = db.execute(maxval_cmd, (tick_id,)).fetchone()[0]
         values = db.execute(general_cmd, (tick_id,)).fetchmany(size)
-        print max_val, np.max(values)
         if np.max(values) < max_val * ratio:
+            ret_ids.append(tick_id)
+    
+    return ret_ids
+    
+def getGrawingTickIDs(db_name, tick_ids=[], ratio=0.005,
+                        size=20, value_type="close_v"):
+    if len(tick_ids) == 0: tick_ids = getTickIDsFromSQL(db_name)
+    db = sqlite3.connect(db_name)
+    general_cmd = "select %s from tickdata where tick_id=? order by date desc"\
+                                                                % (value_type,)
+    ret_ids = []
+    for tick_id in tick_ids:
+        values = ([val[0] for val in db.execute(general_cmd,
+                  (tick_id,)).fetchmany(size)])[::-1]
+        roc = indicators.roc(values) * 0.01
+        avr_roc = np.mean(roc[1:])
+        if avr_roc > ratio:
             ret_ids.append(tick_id)
     
     return ret_ids
