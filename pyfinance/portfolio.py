@@ -91,10 +91,10 @@ def normalizeWeight(weights):
 
 def simulateReturn(sol, roc, round_precision=2, tick_ids=None, dates=None):
     mask, relavent_weights = _filteIrrelaventTicks(sol, round_precision)
-    tick_ids = np.asanyarray(tick_ids)
     relavent_roc = roc[mask]
     
     if not tick_ids == None:
+        tick_ids = np.asanyarray(tick_ids)
         relavent_ids = tick_ids[mask]
         try:
             from . import nikkei225

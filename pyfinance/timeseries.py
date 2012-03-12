@@ -121,7 +121,7 @@ def _getOneTickDataFromSQL(db_name, tick_id, size=-1,
         raise TickerCodeError, "Ticker Code %s not found" % tick_id
 
     # get tick data
-    sql_cmd = "select * from tickdata where tick_id=? order by date desc"
+    sql_cmd = "select * from tickdata where tick_id=?"
     query_values = [tick_id]
 
     if begin_date:
@@ -131,6 +131,8 @@ def _getOneTickDataFromSQL(db_name, tick_id, size=-1,
     if end_date:
         sql_cmd += " and date <= ?"
         query_values.append(str(end_date))
+
+    sql_cmd += " order by date desc"
 
     # execute sql command
     cmd_res = db.execute(sql_cmd, query_values)
