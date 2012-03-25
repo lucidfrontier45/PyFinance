@@ -7,16 +7,14 @@ import pyfinance.timeseries as ts
 import pyfinance.yahoo_finance_jp as yf
 from pyfinance import nikkei225
 
-#tick_id = argv[1]
-#db_name = argv[2]
-
 db_name = "nikkei225.db"
 tick_ids = nikkei225.getNikkei225()[1].keys()
 error_list = []
+date_len = int(argv[1])
 
 for tick_id in tick_ids:
     try:
-        ticks = yf.getTick(tick_id,length=1000)
+        ticks = yf.getTick(tick_id, length=date_len)
         ticks.sort()
         for _ in xrange(5):
             try:
