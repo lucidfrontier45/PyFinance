@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import cStringIO
 import codecs
@@ -300,7 +300,7 @@ def _parseTickList(ticklist_str):
                 Industry_Type[i][1].append(tick_id)
             except:
                 pass
-            
+
     return Industry_Type, Tick_Codes
 
 

@@ -5,15 +5,16 @@ Created on 2012/03/02
 '''
 
 import numpy as np
-from openopt import QP
+import openopt
 from . import indicators
 
+
 def prepareDataFromTimeSeries(tick_data, lag=1):
-    roc = np.array([indicators.roc(ts.data[:,3], lag) for ts in tick_data])
+    roc = np.array([indicators.roc(ts.data[:, 3], lag) for ts in tick_data])
     mu = np.mean(roc, 1)
     cv = np.cov(roc)
     return roc, mu, cv
-    
+
 
 def train_fixed_return(cv, mu, target_return=1.0, alpha=0.01, iprint=False):
     n_components = len(mu)
@@ -27,12 +28,12 @@ def train_fixed_return(cv, mu, target_return=1.0, alpha=0.01, iprint=False):
     b = -target_return
     Aeq = np.ones(n_components)
     beq = 1.0
-    qp = QP(H=H, f=f, lb=lb, ub=ub, A=A, b=b, Aeq=Aeq, beq=beq)
+    qp = openopt.QP(H=H, f=f, lb=lb, ub=ub, A=A, b=b, Aeq=Aeq, beq=beq)
     sol = qp.solve("cvxopt_qp", iprint=iprint)
     return sol
 
 
-def train_scan_return(cv, mu, n_separate=100, bmax=None, bmin=None, 
+def train_scan_return(cv, mu, n_separate=100, bmax=None, bmin=None,
                       alpha=0.01, iprint=False):
     if bmin == None:
         bmin = 0.0
@@ -70,42 +71,53 @@ def getBestSolution(mu, solutions, risks=None, returns=None):
     return np.argmin(np.abs(intercepts)), intercepts
 
 
+def truncateCoefficients(sol, minimum_costs, total_budged):
+    minimum_costs = np.asanyarray(minimum_costs)
+    unit_amounts = (sol.xf * total_budged / minimum_costs).round()
+    total_costs = unit_amounts * minimum_costs
+    truncated_coef = total_costs / total_costs.sum()
+    return unit_amounts, total_costs, truncated_coef
+
+
 def accumulateROC(roc):
-    return np.cumprod(roc/100.0 + 1.0)
+    return np.cumprod(roc / 100.0 + 1.0)
 
 
-def _filteIrrelaventTicks(sol, round_precision=2):
+def _filteIrrelaventTicks(sol, round_precision=5):
     rounded_weights = sol.xf.round(round_precision)
     mask = rounded_weights > 0.0
     return mask, rounded_weights[mask]
 
-def getRelaventTicks(sol, tick_ids, round_precision=2):
+
+def getRelaventTicks(sol, tick_ids, round_precision=5):
     mask, relavent_weights = _filteIrrelaventTicks(sol, round_precision)
     tick_ids = np.asanyarray(tick_ids)
     relavent_ids = tick_ids[mask]
     return relavent_ids, relavent_weights
 
+
 def normalizeWeight(weights):
     w = weights.round(2)
     return w / w.sum()
 
-def simulateReturn(sol, roc, round_precision=2, tick_ids=None, dates=None):
+
+def simulateReturn(sol, roc, round_precision=5, tick_ids=None, dates=None):
     mask, relavent_weights = _filteIrrelaventTicks(sol, round_precision)
     relavent_roc = roc[mask]
-    
+
     if not tick_ids == None:
         tick_ids = np.asanyarray(tick_ids)
         relavent_ids = tick_ids[mask]
         try:
             from . import nikkei225
             relavent_names = nikkei225.getNameFromID(relavent_ids)
-            for (tick_id, name, weights) in zip(relavent_ids, 
+            for (tick_id, name, weights) in zip(relavent_ids,
                     relavent_names, relavent_weights):
-                print "%s %s %2d%%" %(tick_id, name, weights * 100)
+                print "%s %s %2d%%" % (tick_id, name, weights * 100)
         except:
             for (tick_id, weights) in zip(relavent_ids, relavent_weights):
-                print "%s %s %2d%%" %(tick_id, weights * 100)
-    
+                print "%s %s %2d%%" % (tick_id, weights * 100)
+
     simulated_return = accumulateROC(np.dot(relavent_weights, relavent_roc))
 
     if not dates == None:
@@ -124,5 +136,3 @@ def simulateReturn(sol, roc, round_precision=2, tick_ids=None, dates=None):
             pass
 
     return simulated_return
-
-

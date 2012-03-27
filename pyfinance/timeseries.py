@@ -74,7 +74,7 @@ class TickTimeSeries(TimeSeries):
         db = sqlite3.connect(db_name)
 
         # attempt to create a table
-        try :
+        try:
             db.execute("CREATE TABLE ticklist(tick_id)")
             db.execute("CREATE TABLE tickdata(tick_id, date, open_v, high_v,\
                     low_v, close_v, volume)")
@@ -108,7 +108,7 @@ def getTickIDsFromSQL(db_name):
     return ids
 
 
-def _getOneTickDataFromSQL(db_name, tick_id, size=-1, 
+def _getOneTickDataFromSQL(db_name, tick_id, size=-1,
                            begin_date=None, end_date=None):
     # get data from sqlite database
     db = sqlite3.connect(db_name)
@@ -141,7 +141,7 @@ def _getOneTickDataFromSQL(db_name, tick_id, size=-1,
     else:
         res = cmd_res.fetchall()
     db.close()
-    
+
     # create a TickTimeSeries
     dates = []
     data = []
@@ -152,20 +152,20 @@ def _getOneTickDataFromSQL(db_name, tick_id, size=-1,
     ts = TickTimeSeries(dates, data, tick_id)
     ts.sort()
     return ts
-    
-    
+
+
 def getTickDataFromSQL(db_name, tick_ids=[], size=-1,
                        begin_date=None, end_date=None):
     if len(tick_ids) == 0: tick_ids = getTickIDsFromSQL(db_name)
     tick_data = []
     for tick_id in tick_ids:
         try:
-            ts = _getOneTickDataFromSQL(db_name, tick_id, size, 
+            ts = _getOneTickDataFromSQL(db_name, tick_id, size,
                                         begin_date, end_date)
             tick_data.append(ts)
         except:
             pass
-        
+
     min_len = min([len(ts) for ts in tick_data])
     tick_ids = []
     for i, ts in enumerate(tick_data):
@@ -177,7 +177,7 @@ def getTickDataFromSQL(db_name, tick_ids=[], size=-1,
         tick_data[i] = truncated_ts
         tick_data[i].sort()
         tick_ids.append(tick_id)
-    
+
     return tick_ids, tick_data
 
 
@@ -194,9 +194,9 @@ def filterPeakedTickIDs(db_name, tick_ids=[], ratio=0.9,
         values = db.execute(general_cmd, (tick_id,)).fetchmany(size)
         if np.max(values) < max_val * ratio:
             ret_ids.append(tick_id)
-    
+
     return ret_ids
-    
+
 def getGrawingTickIDs(db_name, tick_ids=[], ratio=0.005,
                         size=20, value_type="close_v"):
     if len(tick_ids) == 0: tick_ids = getTickIDsFromSQL(db_name)
@@ -211,9 +211,9 @@ def getGrawingTickIDs(db_name, tick_ids=[], ratio=0.005,
         avr_roc = np.mean(roc[1:])
         if avr_roc > ratio:
             ret_ids.append(tick_id)
-    
+
     return ret_ids
-    
+
 
 def _str2date(s):
     """ convert strings to date object
