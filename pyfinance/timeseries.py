@@ -78,8 +78,10 @@ class TickTimeSeries(TimeSeries):
             db.execute("CREATE TABLE ticklist(tick_id)")
             db.execute("CREATE TABLE tickdata(tick_id, date, open_v, high_v,\
                     low_v, close_v, volume)")
-            db.execute("CREATE UNIQUE INDEX tick_idx on tickdata(tick_id,date)")
-            db.execute("CREATE UNIQUE INDEX data_idx on tickdata(tick_id,date)")
+            db.execute(
+                "CREATE UNIQUE INDEX tick_idx on tickdata(tick_id,date)")
+            db.execute(
+                "CREATE UNIQUE INDEX data_idx on tickdata(tick_id,date)")
         except sqlite3.OperationalError:
             pass
 
@@ -156,7 +158,9 @@ def _getOneTickDataFromSQL(db_name, tick_id, size=-1,
 
 def getTickDataFromSQL(db_name, tick_ids=[], size=-1,
                        begin_date=None, end_date=None):
-    if len(tick_ids) == 0: tick_ids = getTickIDsFromSQL(db_name)
+    if len(tick_ids) == 0:
+        tick_ids = getTickIDsFromSQL(db_name)
+
     tick_data = []
     for tick_id in tick_ids:
         try:
@@ -183,7 +187,8 @@ def getTickDataFromSQL(db_name, tick_ids=[], size=-1,
 
 def filterPeakedTickIDs(db_name, tick_ids=[], ratio=0.9,
                         size=10, value_type="close_v"):
-    if len(tick_ids) == 0: tick_ids = getTickIDsFromSQL(db_name)
+    if len(tick_ids) == 0:
+        tick_ids = getTickIDsFromSQL(db_name)
     db = sqlite3.connect(db_name)
     maxval_cmd = "select max(%s) from tickdata where tick_id=?" % (value_type,)
     general_cmd = "select %s from tickdata where tick_id=? order by date desc"\
@@ -197,9 +202,11 @@ def filterPeakedTickIDs(db_name, tick_ids=[], ratio=0.9,
 
     return ret_ids
 
+
 def getGrawingTickIDs(db_name, tick_ids=[], ratio=0.005,
                         size=20, value_type="close_v"):
-    if len(tick_ids) == 0: tick_ids = getTickIDsFromSQL(db_name)
+    if len(tick_ids) == 0:
+        tick_ids = getTickIDsFromSQL(db_name)
     db = sqlite3.connect(db_name)
     general_cmd = "select %s from tickdata where tick_id=? order by date desc"\
                                                                 % (value_type,)
@@ -221,4 +228,3 @@ def _str2date(s):
     temp = [int(ss) for ss in s.split("-")]
     date = datetime.date(temp[0], temp[1], temp[2])
     return date
-

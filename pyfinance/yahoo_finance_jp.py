@@ -30,24 +30,24 @@ def _splitToTick(soup):
     date_str = re.sub(u"日", u"", re.sub(u"[年月]", "/", date_str))
     date_temp = date_str.split("/")
     date = datetime.date(int(date_temp[0]),
-                         int(date_temp[1]), int(date_temp[2]))
+            int(date_temp[1]), int(date_temp[2]))
     #date_str = "%04d/%02d/%02d" \
-    #    % (int(date_temp[0]),int(date_temp[1]),int(date_temp[2]))
+            #    % (int(date_temp[0]),int(date_temp[1]),int(date_temp[2]))
 
     # extract other price values
     open_v = float(_extractStr(soup.contents[3]))
     max_v = float(_extractStr(soup.contents[5]))
     min_v = float(_extractStr(soup.contents[7]))
     close_v = float(_extractStr(soup.contents[9]))
-    
+
     #if volume does not exist, use dummy value
-    try:    
+    try:
         volume = float(_extractStr(soup.contents[11]))
     except:
         volume = 0.0
 
-    data = [open_v, max_v, min_v, close_v, volume]    
-        
+    data = [open_v, max_v, min_v, close_v, volume]
+
     return date, data
 
 
@@ -61,14 +61,14 @@ def getTick(code, end_date=None, start_date=None, length=500):
         end_date = datetime.date.today()
     elif isinstance(end_date, str):
         end_date = _str2date(end_date)
-        
+
     if start_date == None:
         # set default start_date = today - length * scale
         start_date = end_date - datetime.timedelta(days=length * scale)
     elif isinstance(start_date, str):
         start_date = _str2date(start_date)
         length = (end_date - start_date).days
-        
+
     print "get data from %s to %s" % (start_date, end_date)
     start_m, start_d, start_y = start_date.month, \
             start_date.day, start_date.year
@@ -84,7 +84,8 @@ def getTick(code, end_date=None, start_date=None, length=500):
         # prepare BeautifulSoup object
         url_t = "http://table.yahoo.co.jp/t"\
          + "?s=%s&a=%s&b=%s&c=%s&d=%s&e=%s&f=%s&g=d&q=t&y=%d&z=%s&x=.csv"\
-         % (code, start_m, start_d, start_y, end_m, end_d, end_y, niter, code)
+         % (code, start_m, start_d, start_y, end_m, end_d, end_y,\
+            niter, code)
         #print url_t
         url_data = unicode(urllib2.urlopen(url_t).read(), enc, 'ignore')
         soup = BeautifulSoup(url_data)
@@ -120,7 +121,7 @@ def getTick(code, end_date=None, start_date=None, length=500):
 
 def getUnitAmount(code):
     base_url = "http://stocks.finance.yahoo.co.jp/stocks/detail/?code=%s"
-    url = stock_url % (code,)
+    url = base_url % (code,)
     soup = BeautifulSoup(urllib2.urlopen(url).read())
     all_dl = soup.findAll("dl")
     text_unit_amount = None
@@ -135,6 +136,33 @@ def getUnitAmount(code):
     if text_unit_amount == None:
         return None
     else:
-        unit_amount = int(text_unit_amount.replace(",",""))
+        try:
+            unit_amount = int(text_unit_amount.replace(",", ""))
+        except ValueError:
+            unit_amount = 1
 
     return unit_amount
+
+
+def dumpUnitAmountToSQL(codes, db_name):
+    import sqlite3
+    db = sqlite3.connect(db_name)
+
+    try:
+        db.execute("CREATE TABLE unitamount(tick_id, unit_amount)")
+        db.execute("CREATE UNIQUE INDEX tick_idx2 on uitamount(tick_id)")
+    except sqlite3.OperationalError:
+        pass
+
+    unit_amounts = [getUnitAmount(code) for code in codes]
+    sql_cmd = """insert or replace into unitamount(tick_id, unit_amount)
+                values (?, ?)"""
+    for (code, unit_amount) in zip(codes, unit_amounts):
+        print code, unit_amount
+        if unit_amount == None:
+            continue
+        else:
+            db.execute(sql_cmd, (code, unit_amount))
+
+    db.commit()
+    db.close()
