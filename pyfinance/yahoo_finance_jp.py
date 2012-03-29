@@ -116,3 +116,25 @@ def getTick(code, end_date=None, start_date=None, length=500):
     if ts[0] == []:
         raise TickerCodeError, "Ticker Code %s not found" % code
     return TickTimeSeries(ts[0], ts[1], code)
+
+
+def getUnitAmount(code):
+    base_url = "http://stocks.finance.yahoo.co.jp/stocks/detail/?code=%s"
+    url = stock_url % (code,)
+    soup = BeautifulSoup(urllib2.urlopen(url).read())
+    all_dl = soup.findAll("dl")
+    text_unit_amount = None
+    for dl in all_dl:
+        try:
+            if dl.dt.contents[0] == u"単元株数":
+                text_unit_amount = dl.dd.contents[0].text
+                break
+        except:
+            pass
+
+    if text_unit_amount == None:
+        return None
+    else:
+        unit_amount = int(text_unit_amount.replace(",",""))
+
+    return unit_amount
