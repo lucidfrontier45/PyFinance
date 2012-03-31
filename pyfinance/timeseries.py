@@ -79,6 +79,8 @@ class TickTimeSeries(TimeSeries):
             db.execute("CREATE TABLE tickdata(tick_id, date, open_v, high_v,\
                     low_v, close_v, volume)")
             db.execute(
+                "CREATE UNIQUE INDEX ticklist_idx on tickdata(tick_id,date)")
+            db.execute(
                 "CREATE UNIQUE INDEX tick_idx on tickdata(tick_id,date)")
             db.execute(
                 "CREATE UNIQUE INDEX data_idx on tickdata(tick_id,date)")
@@ -203,7 +205,7 @@ def filterPeakedTickIDs(db_name, tick_ids=[], ratio=0.9,
     return ret_ids
 
 
-def getGrawingTickIDs(db_name, tick_ids=[], ratio=0.005,
+def getGrowingTickIDs(db_name, tick_ids=[], ratio=0.005,
                         size=20, value_type="close_v"):
     if len(tick_ids) == 0:
         tick_ids = getTickIDsFromSQL(db_name)

@@ -3,6 +3,7 @@
 import re
 import datetime
 import urllib2
+import sqlite3
 from BeautifulSoup import BeautifulSoup
 from timeseries import TickTimeSeries, TickerCodeError, _str2date
 
@@ -145,7 +146,6 @@ def getUnitAmount(code):
 
 
 def dumpUnitAmountToSQL(codes, db_name):
-    import sqlite3
     db = sqlite3.connect(db_name)
 
     try:
@@ -166,3 +166,12 @@ def dumpUnitAmountToSQL(codes, db_name):
 
     db.commit()
     db.close()
+
+
+def readUnitAmountFromSQL(codes, db_name):
+    db = sqlite3.connect(db_name)
+    strcodes = "(" + str(list(codes))[1:-1] + ")"
+    sql_cmd = "select * from unitamount where tick_id in %s" % (strcodes,)
+    res = db.execute(sql_cmd).fetchall()
+    db.close()
+    return res

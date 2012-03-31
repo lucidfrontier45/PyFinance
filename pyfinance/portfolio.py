@@ -83,14 +83,14 @@ def accumulateROC(roc):
     return np.cumprod(roc / 100.0 + 1.0)
 
 
-def _filteIrrelaventTicks(sol, round_precision=5):
-    rounded_weights = sol.xf.round(round_precision)
+def _filteIrrelaventTicks(xf, round_precision=5):
+    rounded_weights = xf.round(round_precision)
     mask = rounded_weights > 0.0
     return mask, rounded_weights[mask]
 
 
-def getRelaventTicks(sol, tick_ids, round_precision=5):
-    mask, relavent_weights = _filteIrrelaventTicks(sol, round_precision)
+def getRelaventTicks(xf, tick_ids, round_precision=5):
+    mask, relavent_weights = _filteIrrelaventTicks(xf, round_precision)
     tick_ids = np.asanyarray(tick_ids)
     relavent_ids = tick_ids[mask]
     return relavent_ids, relavent_weights
@@ -101,8 +101,8 @@ def normalizeWeight(weights):
     return w / w.sum()
 
 
-def simulateReturn(sol, roc, round_precision=5, tick_ids=None, dates=None):
-    mask, relavent_weights = _filteIrrelaventTicks(sol, round_precision)
+def simulateReturn(xf, roc, round_precision=5, tick_ids=None, dates=None):
+    mask, relavent_weights = _filteIrrelaventTicks(xf, round_precision)
     relavent_roc = roc[mask]
 
     if not tick_ids == None:
