@@ -79,7 +79,7 @@ class TickTimeSeries(TimeSeries):
             db.execute("CREATE TABLE tickdata(tick_id, date, open_v, high_v,\
                     low_v, close_v, volume)")
             db.execute(
-                "CREATE UNIQUE INDEX ticklist_idx on tickdata(tick_id,date)")
+                "CREATE UNIQUE INDEX ticklist_idx on tickdata(tick_id)")
             db.execute(
                 "CREATE UNIQUE INDEX tick_idx on tickdata(tick_id,date)")
             db.execute(

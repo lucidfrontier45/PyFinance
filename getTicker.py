@@ -22,7 +22,7 @@ for tick_id in tick_ids:
                 break
             except sqlite3.OperationalError:
                 time.sleep(1)
-    except IndexError:
+    except ts.TickerCodeError:
         error_list.append(tick_id)
 
 
