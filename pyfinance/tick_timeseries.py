@@ -154,6 +154,30 @@ def getTickDataFromSQL(tick_ids=[], db_name=None, size=-1,
     return result_ids, tick_data
 
 
+def alignTickData(tick_data, col="final_v", norm=True):
+    """aligh every tick data
+    
+    params
+    ------
+    tick_data : list, a list of tick data
+    col : string, column name of value type to use
+    norm : boolean, normalize with unit amount
+    
+    return
+    ------
+    DataFrame of aligned tick data
+    """
+    
+    if norm:
+        dfs = [pd.DataFrame(t[col] * t.unit_amount, 
+                        columns=[str(t.tick_id)]) for t in tick_data]
+    else:
+        dfs = [pd.DataFrame(t[col],
+                        columns=[str(t.tick_id)]) for t in tick_data]
+    
+    ts = dfs[0].join(dfs[1:])
+    return ts
+
 def filterPeakedTickIDs(tick_ids=[], db_name=None, ratio=0.9,
                         size=10, value_type="close_v"):
     if db_name == None:
