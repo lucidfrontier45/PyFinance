@@ -5,7 +5,7 @@ import datetime
 import urllib2
 import sqlite3
 from BeautifulSoup import BeautifulSoup
-from timeseries import TickTimeSeries, TickerCodeError, _str2date
+from .tick_timeseries import TickTimeSeries, TickerCodeError, _str2date
 
 # yahoo finance jp uses currently EUC-JP encoding
 enc = "euc-jp"

@@ -3,7 +3,7 @@
 from sys import argv, exit
 import time
 import sqlite3
-import pyfinance.timeseries as ts
+import pyfinance.tick_timeseries as ts
 import pyfinance.yahoo_finance_jp as yf
 from pyfinance.db import initDB, setDBName, getDBName
 from pyfinance import nikkei225
