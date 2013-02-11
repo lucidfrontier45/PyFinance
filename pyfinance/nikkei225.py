@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import urllib2
+import requests
 from BeautifulSoup import BeautifulSoup
 
 _nikkei_url = 'http://indexes.nikkei.co.jp/nkave/index/component?idx=nk225'
 
 _nikkei225_id = {}
 _nikkei225_name = {}
+_init_flag = False
 
 __all__ = ["getNikkei225IdHash", "getNikkei225NameHash"]
 
@@ -15,8 +16,9 @@ def _fetchNikkei225():
     global _nikkei225_name
 
     print "fetching nikkei225 list from " + _nikkei_url
-    html = urllib2.urlopen(_nikkei_url).read()
-    soup = soup = BeautifulSoup(html,
+#    html = urllib2.urlopen(_nikkei_url).read()
+    html = requests.get(_nikkei_url).content
+    soup = BeautifulSoup(html,
             convertEntities=BeautifulSoup.HTML_ENTITIES)
     table_dat = soup.findAll("tr",{"class":"cmn-stocknames_odd cmn-charcter"})\
             + soup.findAll("tr", {"class":"cmn-stocknames_even cmn-charcter"})
@@ -29,15 +31,13 @@ def _fetchNikkei225():
 
 
 def getNikkei225IdHash(refresh=False):
-    if refresh:
+    if refresh or not _init_flag:
         _fetchNikkei225()
 
     return _nikkei225_id
     
 def getNikkei225NameHash(refresh=False):
-    if refresh:
+    if refresh or not _init_flag:
         _fetchNikkei225()
 
     return _nikkei225_name
-    
-_fetchNikkei225()

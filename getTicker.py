@@ -1,16 +1,23 @@
 #! /usr/bin/python
 
-from sys import argv
+from sys import argv, exit
 import time
 import sqlite3
 import pyfinance.timeseries as ts
 import pyfinance.yahoo_finance_jp as yf
+from pyfinance.db import initDB, setDBName, getDBName
 from pyfinance import nikkei225
 
-db_name = "nikkei225.db"
+db_name = argv[1]
+setDBName(db_name)
+
+if argv[2] == "-init":
+    initDB()
+    exit()
+
 tick_ids = sorted(nikkei225.getNikkei225NameHash().keys())
 error_list = []
-date_len = int(argv[1])
+date_len = int(argv[2])
 
 for tick_id in tick_ids:
     try:
@@ -18,9 +25,10 @@ for tick_id in tick_ids:
         ticks.sort()
         for _ in xrange(5):
             try:
-                ticks.dumpToSQL(db_name)
+                ticks.dumpToSQL()
                 break
-            except sqlite3.OperationalError:
+            except sqlite3.OperationalError, e:
+                print e
                 time.sleep(1)
     except ts.TickerCodeError:
         error_list.append(tick_id)

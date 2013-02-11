@@ -13,14 +13,17 @@ enc = "euc-jp"
 
 def _extractStr(content):
     """extract strings from soup data which contains bold style"""
-    found = content.findAll('b')
-    if found:
-        # <td><small><b>25,810</b></small></td>
-        temp = content.b.string
-    else:
-        # <td><small>26,150</small></td>
-        temp = content.small.string
-    string = re.sub(",", "", temp)
+#    found = content.findAll('b')
+#    if found:
+#        # <td><small><b>25,810</b></small></td>
+#        temp = content.b.string
+#    else:
+#        # <td><small>26,150</small></td>
+#        temp = content.small.string
+#
+#    temp = content.text
+#    string = re.sub(",", "", temp)
+    string = re.sub(",", "", content.text)
     return string
 
 
@@ -41,15 +44,42 @@ def _splitToTick(soup):
     min_v = float(_extractStr(soup.contents[7]))
     close_v = float(_extractStr(soup.contents[9]))
 
-    #if volume does not exist, use dummy value
-    try:
-        volume = float(_extractStr(soup.contents[11]))
-    except:
-        volume = 0.0
+    volume = float(_extractStr(soup.contents[11]))
+    final_v = float(_extractStr(soup.contents[13]))
 
-    data = [open_v, max_v, min_v, close_v, volume]
+#    #if volume does not exist, use dummy value
+#    try:
+#        volume = float(_extractStr(soup.contents[11]))
+#    except:
+#        volume = 0.0
+
+    data = [open_v, max_v, min_v, close_v, volume, final_v]
 
     return date, data
+
+def _getUnitAmount(code):
+    base_url = "http://stocks.finance.yahoo.co.jp/stocks/detail/?code=%s"
+    url = base_url % (code,)
+    soup = BeautifulSoup(urllib2.urlopen(url).read())
+    all_dl = soup.findAll("dl")
+    text_unit_amount = None
+    for dl in all_dl:
+        try:
+            if dl.dt.contents[0] == u"単元株数":
+                text_unit_amount = dl.dd.contents[0].text
+                break
+        except:
+            pass
+
+    if text_unit_amount == None:
+        return None
+    else:
+        try:
+            unit_amount = int(text_unit_amount.replace(",", ""))
+        except ValueError:
+            unit_amount = 1
+
+    return unit_amount
 
 
 def getTick(code, end_date=None, start_date=None, length=500):
@@ -117,61 +147,36 @@ def getTick(code, end_date=None, start_date=None, length=500):
 
     if ts[0] == []:
         raise TickerCodeError, "Ticker Code %s not found" % code
-    return TickTimeSeries(ts[0], ts[1], code)
 
-
-def getUnitAmount(code):
-    base_url = "http://stocks.finance.yahoo.co.jp/stocks/detail/?code=%s"
-    url = base_url % (code,)
-    soup = BeautifulSoup(urllib2.urlopen(url).read())
-    all_dl = soup.findAll("dl")
-    text_unit_amount = None
-    for dl in all_dl:
-        try:
-            if dl.dt.contents[0] == u"単元株数":
-                text_unit_amount = dl.dd.contents[0].text
-                break
-        except:
-            pass
-
-    if text_unit_amount == None:
-        return None
-    else:
-        try:
-            unit_amount = int(text_unit_amount.replace(",", ""))
-        except ValueError:
-            unit_amount = 1
-
-    return unit_amount
+    # get unit amount
+    unit_amount = _getUnitAmount(code)
+    
+    dates, data = ts[0], ts[1]
+    return TickTimeSeries(code, dates, data, unit_amount)
+#    return code, dates, data
 
 
 def dumpUnitAmountToSQL(codes, db_name):
-    db = sqlite3.connect(db_name)
+    con = sqlite3.connect(db_name)
 
-    try:
-        db.execute("CREATE TABLE unitamount(tick_id, unit_amount)")
-        db.execute("CREATE UNIQUE INDEX tick_idx2 on uitamount(tick_id)")
-    except sqlite3.OperationalError:
-        pass
-
-    unit_amounts = [getUnitAmount(code) for code in codes]
-    sql_cmd = """insert or replace into unitamount(tick_id, unit_amount)
+    unit_amounts = [_getUnitAmount(code) for code in codes]
+    sql_cmd = """INSERT OR REPLACE INTO ticklist(tick_id, unit_amount)
                 values (?, ?)"""
     for (code, unit_amount) in zip(codes, unit_amounts):
         print code, unit_amount
         if unit_amount == None:
             continue
         else:
-            db.execute(sql_cmd, (code, unit_amount))
+            con.execute(sql_cmd, (code, unit_amount))
 
-    db.commit()
-    db.close()
+    con.commit()
+    con.close()
 
 
 def readUnitAmountFromSQL(codes, db_name):
-    db = sqlite3.connect(db_name)
-    strcodes = "(" + str(list(codes))[1:-1] + ")"
-    sql_cmd = "select * from unitamount where tick_id in %s" % (strcodes,)
-    res = db.execute(sql_cmd).fetchall()
-    db.close()
+    con = sqlite3.connect(db_name)
+    strcodes = str(list(codes))[1:-1] 
+    sql_cmd = "SELECT * FROM ticklist WHERE tick_id IN (%s)" % (strcodes,)
+    res = con.execute(sql_cmd).fetchall()
+    con.close()
     return res
