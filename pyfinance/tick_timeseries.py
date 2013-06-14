@@ -22,6 +22,19 @@ class TickTimeSeries(DataFrame):
         self.tick_id = tick_id
         self.sort(inplace=True)
         self.unit_amount = unit_amount
+     
+     
+    # for pickle    
+    def __getstate__(self):
+        odict = self.__dict__.copy()
+        odict["tick_id"] = self.tick_id
+        odict["unit_amount"] = self.unit_amount
+        return odict
+    
+    def __setstate__(self, odict):
+        self.__dict__.update(odict)
+        self.tick_id = odict["tick_id"]
+        self.unit_amount = odict["unit_amount"]
         
     @property
     def dates(self):
@@ -30,7 +43,7 @@ class TickTimeSeries(DataFrame):
     def dumpToSQL(self, db_name=None):
         if db_name == None:
             db_name = getDBName()
-        
+            
         con = sqlite3.connect(db_name)
         
         # first update ticklist

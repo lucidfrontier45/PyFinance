@@ -9,4 +9,5 @@ setup(name='pyfinance',
       author_email='lucidfrontier.45@gmail.com',
       url='http://frontier45.web.fc2.com/',
       packages=['pyfinance'],
+      scripts=["getTicker.py"],
      )
