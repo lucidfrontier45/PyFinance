@@ -152,7 +152,7 @@ def getTick(code, end_date=None, start_date=None, length=500):
     unit_amount = _getUnitAmount(code)
     
     dates, data = ts[0], ts[1]
-    return TickTimeSeries(code, dates, data, unit_amount)
+    return TickTimeSeries(data, tick_id=code, index=dates, unit_amount=unit_amount)
 #    return code, dates, data
 
 

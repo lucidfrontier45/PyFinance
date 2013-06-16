@@ -4,6 +4,7 @@ import sqlite3
 import datetime
 import pandas as pd
 from pandas import DataFrame
+import functools
 
 from . import indicators
 from .db import getDBName
@@ -16,13 +17,21 @@ class TickerCodeError(Exception):
 
 
 class TickTimeSeries(DataFrame):
-    def __init__(self, tick_id, dates, data, unit_amount=None):
+    def __init__(self, data=None, index=None, columns=_col_names, dtype=None,
+                 copy=False, tick_id=None, unit_amount=None):
 #        print tick_id, dates, data
-        DataFrame.__init__(self, data, index=dates, columns=_col_names)
+        if tick_id == None:
+            raise ValueError("tick_id must be set")
+        if columns == None:
+            columns = _col_names
+        DataFrame.__init__(self, data, columns=columns)
         self.tick_id = tick_id
         self.sort(inplace=True)
         self.unit_amount = unit_amount
-     
+        
+    @property
+    def _constructor(self):
+        return functools.partial(self.__class__, tick_id=self.tick_id, unit_amount=self.unit_amount)
      
     # for pickle    
     def __getstate__(self):
@@ -39,6 +48,10 @@ class TickTimeSeries(DataFrame):
     @property
     def dates(self):
         return self.index
+
+    @property
+    def data(self):
+        return DataFrame(self)
 
     def dumpToSQL(self, db_name=None):
         if db_name == None:
@@ -128,7 +141,7 @@ def _getOneTickDataFromSQL(tick_id, db_name=None, size=-1,
         dates.append(_str2date(r[1]))
         data.append(r[2:])
 
-    ts = TickTimeSeries(tick_id, dates, data, unit_amount)
+    ts = TickTimeSeries(data, tick_id=tick_id, index=dates, unit_amount=unit_amount)
     ts.sort()
     return ts
 
