@@ -24,7 +24,7 @@ class TickTimeSeries(DataFrame):
             raise ValueError("tick_id must be set")
         if columns == None:
             columns = _col_names
-        DataFrame.__init__(self, data, columns=columns)
+        DataFrame.__init__(self, data, index, columns, dtype, copy)
         self.tick_id = tick_id
         self.sort(inplace=True)
         self.unit_amount = unit_amount
