@@ -33,7 +33,7 @@ def workf(tick_id):
             except sqlite3.OperationalError, e:
                 print e
                 time.sleep(1)
-    except ts.TickerCodeError:
+    except :
         print "error %d" % (tick_id,)
         error_list.put(tick_id, False)
 

@@ -5,11 +5,19 @@ import datetime
 import urllib2
 import sqlite3
 from BeautifulSoup import BeautifulSoup
+from requests import Session
 from .tick_timeseries import TickTimeSeries, TickerCodeError, _str2date
 
 # yahoo finance jp uses currently EUC-JP encoding
 enc = "euc-jp"
 
+_user_agent = "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.36 Safari/537.36"
+
+def _initSession():
+    session = Session()
+    session.headers["Connection"] = "Keep-Alive"
+    session.headers["User-Agent"] = _user_agent
+    return session
 
 def _extractStr(content):
     """extract strings from soup data which contains bold style"""
@@ -57,10 +65,14 @@ def _splitToTick(soup):
 
     return date, data
 
-def _getUnitAmount(code):
-    base_url = "http://stocks.finance.yahoo.co.jp/stocks/detail/?code=%s"
-    url = base_url % (code,)
-    soup = BeautifulSoup(urllib2.urlopen(url).read())
+def _getUnitAmount(code, session=None):
+    if session is None:
+        session = _initSession()
+    base_url = "http://stocks.finance.yahoo.co.jp/stocks/detail/"
+    params = {"code":code}
+#     url = base_url % (code,)
+#     soup = BeautifulSoup(urllib2.urlopen(url).read())
+    soup = BeautifulSoup(session.get(base_url, params=params).text)
     all_dl = soup.findAll("dl")
     text_unit_amount = None
     for dl in all_dl:
@@ -82,10 +94,13 @@ def _getUnitAmount(code):
     return unit_amount
 
 
-def getTick(code, end_date=None, start_date=None, length=500):
+def getTick(code, session=None, end_date=None, start_date=None, length=500):
     print "getting data of tikker %s from yahoo finance...  " % code
 
     # initialize
+    if session is None:
+        session = _initSession()
+        
     scale = 8.0 / 5.0  # for skipping hollidays
     if end_date == None:
         # set default end_date = today
@@ -110,15 +125,23 @@ def getTick(code, end_date=None, start_date=None, length=500):
     ts = [[], []]  # an array to store the result, [list_dates,list_prices]
     niter = 0  # iteration counter
     while(niter < length):
-        #print niter
+#         print niter
+
+#         # prepare BeautifulSoup object
+#         url_t = "http://table.yahoo.co.jp/t"\
+#          + "?s=%s&a=%s&b=%s&c=%s&d=%s&e=%s&f=%s&g=d&q=t&y=%d&z=%s&x=.csv"\
+#          % (code, start_m, start_d, start_y, end_m, end_d, end_y,\
+#             niter, code)
+#         #print url_t
+#         url_data = unicode(urllib2.urlopen(url_t).read(), enc, 'ignore')
+#         soup = BeautifulSoup(url_data)
 
         # prepare BeautifulSoup object
-        url_t = "http://table.yahoo.co.jp/t"\
-         + "?s=%s&a=%s&b=%s&c=%s&d=%s&e=%s&f=%s&g=d&q=t&y=%d&z=%s&x=.csv"\
-         % (code, start_m, start_d, start_y, end_m, end_d, end_y,\
-            niter, code)
+        url_t = "http://table.yahoo.co.jp/t"
+        params = {"s":code, "a":start_m, "b":start_d, "c":start_y, "d":end_m, "e":end_d, "f":end_y,
+                   "g":"d", "q":"t", "y":niter, "z":code, "x":".csv"}
         #print url_t
-        url_data = unicode(urllib2.urlopen(url_t).read(), enc, 'ignore')
+        url_data = session.get(url_t, params=params).text
         soup = BeautifulSoup(url_data)
 
         # the price data are stored in the following format
@@ -149,7 +172,7 @@ def getTick(code, end_date=None, start_date=None, length=500):
         raise TickerCodeError, "Ticker Code %s not found" % code
 
     # get unit amount
-    unit_amount = _getUnitAmount(code)
+    unit_amount = _getUnitAmount(code, session)
     
     dates, data = ts[0], ts[1]
     return TickTimeSeries(data, tick_id=code, index=dates, unit_amount=unit_amount)
