@@ -2,22 +2,13 @@
 
 import re
 import datetime
-import urllib2
 import sqlite3
 from BeautifulSoup import BeautifulSoup
-from requests import Session
 from .tick_timeseries import TickTimeSeries, TickerCodeError, _str2date
+from .utils import initSession
 
 # yahoo finance jp uses currently EUC-JP encoding
 enc = "euc-jp"
-
-_user_agent = "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.36 Safari/537.36"
-
-def _initSession():
-    session = Session()
-    session.headers["Connection"] = "Keep-Alive"
-    session.headers["User-Agent"] = _user_agent
-    return session
 
 def _extractStr(content):
     """extract strings from soup data which contains bold style"""
@@ -67,7 +58,7 @@ def _splitToTick(soup):
 
 def _getUnitAmount(code, session=None):
     if session is None:
-        session = _initSession()
+        session = initSession()
     base_url = "http://stocks.finance.yahoo.co.jp/stocks/detail/"
     params = {"code":code}
 #     url = base_url % (code,)
@@ -99,7 +90,7 @@ def getTick(code, session=None, end_date=None, start_date=None, length=500):
 
     # initialize
     if session is None:
-        session = _initSession()
+        session = initSession()
         
     scale = 8.0 / 5.0  # for skipping hollidays
     if end_date == None:
