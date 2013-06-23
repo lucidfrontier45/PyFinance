@@ -5,6 +5,11 @@ import datetime
 import pandas as pd
 from pandas import DataFrame
 import functools
+import talib
+import matplotlib.finance
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+
 
 from . import indicators
 from .db import getDBName
@@ -83,7 +88,77 @@ class TickTimeSeries(DataFrame):
         # finalize
         con.commit()
         con.close()
+        
+    def toDict(self):
+        return {"tickid":self.tick_id, "unit":self.unit_amount,
+                "open":self["open_v"], "high":self["close_v"], "low":self["low_v"],
+                "close":self["close_v"], "volume":self["volume"], "final":self["final_v"] }
 
+    def getBasicIndicators(self, short_term=15, long_term=75, start=0, end=-1):
+        dat = self.toDict()
+        
+        MA = talib.abstract.MA
+        MACD = talib.abstract.MACD
+        
+        short_ma = MA(dat, timeperiod=short_term)
+        long_ma = MA(dat, timeperiod=long_term)
+        macd, macd_signal, macd_hist = MACD(dat)
+
+        short_ma = short_ma[start:end]
+        long_ma = long_ma[start:end]
+        macd = macd[start:end]
+        macd_signal = macd_signal[start:end]
+        macd_hist = macd_hist[start:end]
+        
+        return short_ma, long_ma, macd, macd_signal, macd_hist
+    
+    def _make_quotes(self):
+        dates = self.dates
+        float_dates = map(mdates.date2num, dates)
+        quotes = ([float_dates, self["open_v"].values, self["close_v"].values,
+                   self["high_v"].values, self["low_v"].values, self["volume"].values])
+        return zip(*quotes)
+        
+    def show(self, start=0, end=-1):
+        dates = self.dates[start:end]
+        quotes = self._make_quotes()[start:end]
+        short_ma, long_ma, macd, macd_signal, macd_hist = self.getBasicIndicators(start=start, end=end)
+        
+        fig = plt.figure()
+        ax = fig.add_subplot(211)
+        ax.xaxis_date()
+        ax.autoscale_view()
+        
+#         ax.set_xticklabels([])
+        
+        ax.plot(dates, short_ma, label="MA Short")
+        ax.plot(dates, long_ma, label="MA Long")
+        matplotlib.finance.candlestick(ax, quotes, width=0.5, colorup="green", colordown="red")
+        plt.legend()
+
+        ax = fig.add_subplot(212)
+        ax.autoscale_view()
+        ax.xaxis_date()
+ 
+        ax.plot(dates, macd, label="MACD")
+        ax.plot(dates, macd_signal, label="MACD Signal")
+         
+        hist_low = macd_hist[macd_hist < 0.0]
+        dates_low = dates[macd_hist < 0.0]
+         
+        hist_high = macd_hist[macd_hist >= 0.0]
+        dates_high = dates[macd_hist >= 0.0]
+         
+         
+#         ax.bar(dates, macd_hist)
+        ax.bar(dates_low, hist_low, color="red")
+        ax.bar(dates_high, hist_high, color="black")
+        
+        
+        fig.autofmt_xdate()
+        plt.legend()
+        plt.show()
+        
 
 def getTickIDsFromSQL(db_name=None):
     if db_name == None:

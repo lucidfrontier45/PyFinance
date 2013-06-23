@@ -15,7 +15,7 @@ def shift_stack(x, name, dates=None, start_lag=0, end_lag=5):
     df = pd.DataFrame(np.array(shifted_data).T, columns=names)
     if not dates is None:
         df.index = dates
-    return df
+    return df.dropna()
 
 _user_agent = "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.36 Safari/537.36"
 def initSession():
