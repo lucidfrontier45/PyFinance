@@ -51,7 +51,7 @@ tick_id_queue = Queue(len(tick_ids))
 date_len = int(argv[2])
 
 [tick_id_queue.put(i) for i in tick_ids]
-pool = [TickDownloadProcess(tick_id_queue, error_queue) for _ in xrange(10)]
+pool = [TickDownloadProcess(tick_id_queue, error_queue) for _ in xrange(50)]
 for p in pool:
     p.start()
 for p in pool:

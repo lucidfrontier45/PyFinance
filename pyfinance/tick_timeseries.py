@@ -94,15 +94,17 @@ class TickTimeSeries(DataFrame):
                 "open":self["open_v"], "high":self["close_v"], "low":self["low_v"],
                 "close":self["close_v"], "volume":self["volume"], "final":self["final_v"] }
 
-    def getBasicIndicators(self, short_term=15, long_term=75, start=0, end=-1):
+    def getBasicIndicators(self, start=0, end=-1, short_period=25, long_period=75,
+                           fastperiod=12, slowperiod=26, signalperiod=9):
         dat = self.toDict()
         
         MA = talib.abstract.MA
         MACD = talib.abstract.MACD
         
-        short_ma = MA(dat, timeperiod=short_term)
-        long_ma = MA(dat, timeperiod=long_term)
-        macd, macd_signal, macd_hist = MACD(dat)
+        short_ma = MA(dat, timeperiod=short_period)
+        long_ma = MA(dat, timeperiod=long_period)
+        macd, macd_signal, macd_hist = MACD(dat, fastperiod=fastperiod,
+                                slowperiod=slowperiod, signalperiod=signalperiod)
 
         short_ma = short_ma[start:end]
         long_ma = long_ma[start:end]
@@ -119,10 +121,12 @@ class TickTimeSeries(DataFrame):
                    self["high_v"].values, self["low_v"].values, self["volume"].values])
         return zip(*quotes)
         
-    def show(self, start=0, end=-1):
+    def show(self, start=0, end=-1, short_period=25, long_period=75,
+                           fastperiod=12, slowperiod=26, signalperiod=9):
         dates = self.dates[start:end]
         quotes = self._make_quotes()[start:end]
-        short_ma, long_ma, macd, macd_signal, macd_hist = self.getBasicIndicators(start=start, end=end)
+        short_ma, long_ma, macd, macd_signal, macd_hist = self.getBasicIndicators(start=start, end=end,
+                short_period=short_period, long_period=long_period, fastperiod=fastperiod, slowperiod=slowperiod, signalperiod=signalperiod)
         
         fig = plt.figure()
         ax = fig.add_subplot(211)
