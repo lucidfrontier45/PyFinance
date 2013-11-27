@@ -7,8 +7,6 @@ Created on Nov 28, 2013
 
 import numpy as np
 import pandas as pd
-import pyfinance as pf
-import talib
 
 def calc_roc(ts, length=10, buy_key="open_v", sell_key="close_v"):
     buy_prices = ts[buy_key]
