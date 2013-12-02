@@ -1,4 +1,3 @@
-from copy import deepcopy
 import numpy as np
 import sqlite3
 import datetime
@@ -57,6 +56,11 @@ class TickTimeSeries(DataFrame):
     @property
     def data(self):
         return DataFrame(self)
+
+    def fix_split(self):
+        ratio = self["final_v"] / self["close_v"]
+        for key in ("open_v", "high_v", "low_v", "close_v"):
+            self[key] *= ratio
 
     def dumpToSQL(self, db_name=None):
         if db_name == None:
@@ -122,7 +126,7 @@ class TickTimeSeries(DataFrame):
         return zip(*quotes)
         
     def show(self, start=0, end=-1, short_period=25, long_period=75,
-                           fastperiod=12, slowperiod=26, signalperiod=9):
+                           fastperiod=12, slowperiod=26, signalperiod=9, loc=0):
         dates = self.dates[start:end]
         quotes = self._make_quotes()[start:end]
         short_ma, long_ma, macd, macd_signal, macd_hist = self.getBasicIndicators(start=start, end=end,
@@ -138,7 +142,7 @@ class TickTimeSeries(DataFrame):
         ax.plot(dates, short_ma, label="MA Short")
         ax.plot(dates, long_ma, label="MA Long")
         matplotlib.finance.candlestick(ax, quotes, width=0.5, colorup="green", colordown="red")
-        plt.legend()
+        plt.legend(loc=loc)
 
         ax = fig.add_subplot(212)
         ax.autoscale_view()
@@ -160,7 +164,7 @@ class TickTimeSeries(DataFrame):
         
         
         fig.autofmt_xdate()
-        plt.legend()
+        plt.legend(loc=loc)
         plt.show()
         
 

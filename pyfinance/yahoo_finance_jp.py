@@ -166,8 +166,9 @@ def getTick(code, session=None, end_date=None, start_date=None, length=500):
     unit_amount = _getUnitAmount(code, session)
     
     dates, data = ts[0], ts[1]
-    return TickTimeSeries(data, tick_id=code, index=dates, unit_amount=unit_amount)
-#    return code, dates, data
+    tick_data = TickTimeSeries(data, tick_id=code, index=dates, unit_amount=unit_amount)
+    tick_data.fix_split()
+    return tick_data
 
 
 def dumpUnitAmountToSQL(codes, db_name):
