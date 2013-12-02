@@ -25,8 +25,8 @@ class GoldenCrossStrategy(_BaseStrategy):
     def _fit(self, ts, roc):
         max_score = -1.0
         for short_period in xrange(5, 25):
-            for short_long_ratio in xrange(2, 5):
-                long_period = short_period * short_long_ratio
+            for short_long_ratio in np.logspace(np.log10(2), np.log10(5), 10):
+                long_period = int(short_period * short_long_ratio)
                 params = (short_period, long_period)
                 score = self.score(ts, roc, params=params)
                 if score > max_score:

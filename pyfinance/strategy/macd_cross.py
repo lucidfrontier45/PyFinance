@@ -23,9 +23,9 @@ class MACDCrossStrategy(_BaseStrategy):
     def _fit(self, ts, roc):
         max_score = -1.0
         for fastperiod in xrange(5, 12):
-            for fast_slow_ratio in xrange(2, 5):
+            for fast_slow_ratio in np.logspace(np.log10(2), np.log10(5), 10):
                 for signalperiod in xrange(5, 12):
-                    slowperiod = fastperiod * fast_slow_ratio
+                    slowperiod = int(fastperiod * fast_slow_ratio)
                     params = (fastperiod, slowperiod, signalperiod)
                     score = self.score(ts, roc, params=params)
                     if score > max_score:
