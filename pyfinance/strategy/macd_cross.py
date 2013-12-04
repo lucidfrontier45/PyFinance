@@ -6,7 +6,7 @@ Created on Nov 28, 2013
 
 import numpy as np
 import talib
-from . import _BaseStrategy
+from . import _BaseOptimizeStrategy
 
 def findMACDCross(ts, fastperiod=12, slowperiod=26, signalperiod=9):
     MACD = talib.abstract.MACD
@@ -15,9 +15,9 @@ def findMACDCross(ts, fastperiod=12, slowperiod=26, signalperiod=9):
     mask = np.where(np.diff(np.sign(macd_hist))==2)[0]
     return macd_hist, mask
 
-class MACDCrossStrategy(_BaseStrategy):
+class MACDCrossOptimizeStrategy(_BaseOptimizeStrategy):
     def __init__(self):
-        self.params = (12, 26, 9)
+        self.params_ = (12, 26, 9)
         self._strategy_func = findMACDCross
         
     def _fit(self, ts, roc):

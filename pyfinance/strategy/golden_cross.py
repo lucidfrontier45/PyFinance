@@ -6,7 +6,7 @@ Created on Nov 28, 2013
 
 import numpy as np
 import talib
-from . import _BaseStrategy
+from . import _BaseOptimizeStrategy
 
 def findGoldenCross(ts, short_period=5, long_period=20):
     MA = talib.abstract.MA
@@ -17,9 +17,9 @@ def findGoldenCross(ts, short_period=5, long_period=20):
     mask = np.where(np.diff(np.sign(ma_diff))==2)[0]
     return ma_diff, mask
 
-class GoldenCrossStrategy(_BaseStrategy):
+class GoldenCrossOptimizeStrategy(_BaseOptimizeStrategy):
     def __init__(self):
-        self.params = (25, 75)
+        self.params_ = (25, 75)
         self._strategy_func = findGoldenCross
         
     def _fit(self, ts, roc):

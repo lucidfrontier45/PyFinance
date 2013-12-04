@@ -98,7 +98,7 @@ class TickTimeSeries(DataFrame):
                 "open":self["open_v"], "high":self["close_v"], "low":self["low_v"],
                 "close":self["close_v"], "volume":self["volume"], "final":self["final_v"] }
 
-    def getBasicIndicators(self, start=0, end=-1, short_period=25, long_period=75,
+    def getBasicIndicators(self, start=0, end=None, short_period=25, long_period=75,
                            fastperiod=12, slowperiod=26, signalperiod=9):
         dat = self.toDict()
         
@@ -125,7 +125,7 @@ class TickTimeSeries(DataFrame):
                    self["high_v"].values, self["low_v"].values, self["volume"].values])
         return zip(*quotes)
         
-    def show(self, start=0, end=-1, short_period=25, long_period=75,
+    def show(self, start=0, end=None, short_period=25, long_period=75,
                            fastperiod=12, slowperiod=26, signalperiod=9, loc=0):
         dates = self.dates[start:end]
         quotes = self._make_quotes()[start:end]
@@ -166,6 +166,19 @@ class TickTimeSeries(DataFrame):
         fig.autofmt_xdate()
         plt.legend(loc=loc)
         plt.show()
+        
+    def get_ta(self, start=0, end=None, ta_name="MA", **ta_params):
+        dat = self[start:end].toDict()
+        ta_func = talib.abstract.Function(ta_name)
+        ta_func(dat, **ta_params)
+        return ta_func
+    
+#     def plot_ta(self, start=0, end=None, ta_name="MA", **ta_params):
+#         dat = self[start:end].toDict()
+#         dates = self.dates[start:end]
+#         quotes = self._make_quotes()[start:end]
+#         ta_func = talib.abstract.Function(ta_name)
+        
         
 
 def getTickIDsFromSQL(db_name=None):

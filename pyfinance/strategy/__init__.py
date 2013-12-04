@@ -14,7 +14,7 @@ def calc_roc(ts, length=10, buy_key="open_v", sell_key="close_v"):
     roc = sell_prices / buy_prices
     return roc
 
-class _BaseStrategy():
+class _BaseOptimizeStrategy():
     def __init__(self):
         self.params_ = None
         self._strategy_func = None
@@ -28,6 +28,8 @@ class _BaseStrategy():
         if not params:
             params = self.params_
         _, mask = self._strategy_func(ts[:-10], *params)
+        if len(mask) == 0:
+            return [1.0]
         ts_data = ts.data
         ts_data["roc"] = roc
         ret = ts_data.ix[mask + 2].dropna()
@@ -56,9 +58,12 @@ class _BaseStrategy():
     
     def predict(self, ts):
         _, mask = self._strategy_func(ts, *self.params_)
+        if len(mask) == 0:
+            return None
         if mask[-1] > len(ts) - 5:
             return ts.data.ix[mask].index[-1]
         else:
             return None
-from .golden_cross import findGoldenCross, GoldenCrossStrategy
-from .macd_cross import findMACDCross, MACDCrossStrategy
+from .golden_cross import findGoldenCross, GoldenCrossOptimizeStrategy
+from .macd_cross import findMACDCross, MACDCrossOptimizeStrategy
+from .mom_cross import findMomCross, MomCrossOptimizeStrategy
