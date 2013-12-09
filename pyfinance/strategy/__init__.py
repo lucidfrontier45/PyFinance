@@ -61,9 +61,14 @@ class _BaseOptimizeStrategy():
         if len(mask) == 0:
             return None
         if mask[-1] > len(ts) - 5:
-            return ts.data.ix[mask].index[-1]
+            return ts.data.ix[mask + 1].index[-1]
         else:
             return None
+        
+    def eval(self, ts):
+        return self._strategy_func(ts, *self.params_)
+    
 from .golden_cross import findGoldenCross, GoldenCrossOptimizeStrategy
 from .macd_cross import findMACDCross, MACDCrossOptimizeStrategy
 from .mom_cross import findMomCross, MomCrossOptimizeStrategy
+from .stoch_cross import findSTOCHCross, STOCHCrossOptimizeStrategy
