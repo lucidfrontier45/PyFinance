@@ -7,12 +7,7 @@ Created on Nov 28, 2013
 
 import numpy as np
 import pandas as pd
-
-def calc_roc(ts, length=10, buy_key="open_v", sell_key="close_v"):
-    buy_prices = ts[buy_key]
-    sell_prices = pd.rolling_max(ts[sell_key].shift(-1), length).shift(-length)
-    roc = sell_prices / buy_prices
-    return roc
+from ..utils import calc_roc
 
 class _BaseOptimizeStrategy():
     def __init__(self):
