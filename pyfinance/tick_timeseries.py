@@ -8,11 +8,12 @@ import talib
 import matplotlib.finance
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-
+import pymongo
 
 from . import indicators
 from .db import getDBName
 
+_date_fmt = "%Y%m%d"
 _col_names = ("open_v", "high_v", "low_v", "close_v", "volume", "final_v")
 
 
@@ -61,6 +62,7 @@ class TickTimeSeries(DataFrame):
         ratio = self["final_v"] / self["close_v"]
         for key in ("open_v", "high_v", "low_v", "close_v"):
             self[key] *= ratio
+        self["volume"] /= ratio
 
     def dumpToSQL(self, db_name=None):
         if db_name == None:
@@ -78,12 +80,12 @@ class TickTimeSeries(DataFrame):
         stmt = """INSERT OR REPLACE INTO tickdata(
             tick_id, date, open_v, high_v, low_v, close_v, volume, final_v)
             values (?, ?, ?, ?, ?, ?, ?, ?)"""
-        data_to_insert = zip([self.tick_id]*len(self), self.dates, self.open_v,
+        data_to_insert = zip([self.tick_id] * len(self), self.dates, self.open_v,
              self.high_v, self.low_v, self.close_v, self.volume, self.final_v)
         con.executemany(stmt, data_to_insert)
         
         
-        #print sql_cmd
+        # print sql_cmd
 #        for s in self:
 #            # insert data
 #            con.execute(sql_cmd, (self.tick_id, str(s[0]), s[1][0], s[1][1],
@@ -92,6 +94,16 @@ class TickTimeSeries(DataFrame):
         # finalize
         con.commit()
         con.close()
+        
+    def dumpToMongoDB(self, host="localhost", port=27017, db="jp_stock", collection="prices"):
+        con = pymongo.MongoClient(host=host, port=port)
+        col = con[db][collection]
+        for i in xrange(len(self)):
+            date = self.index[i]
+            data = self.ix[i]
+            d = {"date":date, "date_s":date.strftime(_date_fmt), "tick_id":self.tick_id}
+            d.update(zip(data.keys(), data.values))
+            col.insert(d)
         
     def toDict(self):
         return {"tickid":self.tick_id, "unit":self.unit_amount,
@@ -276,6 +288,81 @@ def getTickDataFromSQL(tick_ids=[], db_name=None, size=-1,
     return result_ids, tick_data
 
 
+def _getOneTickDataFromMongoDB(tick_id, host="localhost", port=27017, db="jp_stock", collection="prices", size=0,
+                           begin_date=None, end_date=None):
+    tick_id = int(tick_id)
+    con = pymongo.MongoClient(host=host, port=port)
+    col = con[db][collection]
+
+#     # first check if the requested tick_id exists
+#     sql_cmd = "SELECT unit_amount FROM ticklist WHERE tick_id=?"
+#     iid = con.execute(sql_cmd, (tick_id,)).fetchone()
+#     if iid == None:
+#         con.close()
+#         raise TickerCodeError, "Ticker Code %d not found" % tick_id
+#     else:
+#         unit_amount = iid[0]
+#         
+# 
+
+    request = {"tick_id":tick_id}
+    cursor = col.find(request).limit(1)
+    if cursor.count() < 1:
+        raise TickerCodeError, "Ticker Code %d not found" % tick_id
+    
+    if begin_date or end_date:
+        request["$and"] = []
+        
+    if begin_date:
+        request["and"].append({"date":{"$gte":begin_date}})
+
+    if end_date:
+        request["and"].append({"date":{"$lte":end_date}})
+
+
+    # get tick data
+    cursor = col.find(request).sort("date",-1).limit(size)
+
+    # create a TickTimeSeries
+    dates = []
+    data = []
+    for r in cursor:
+        dates.append(r["date"])
+        data.append([r[key] for key in _col_names ])
+    print len(data)
+
+    ts = TickTimeSeries(data, tick_id=tick_id, index=dates)
+    ts.sort()
+    return ts
+
+def getTickDataFromMongoDB(tick_ids=[], host="localhost", port=27017, db="jp_stock", collection="prices", size=0,
+                       begin_date=None, end_date=None):
+
+    tick_data = []
+    result_ids = []
+    for tick_id in tick_ids:
+        try:
+            ts = _getOneTickDataFromMongoDB(tick_id, host, port, db, collection, size,
+                                        begin_date, end_date)
+            tick_data.append(ts)
+            result_ids.append(tick_id)
+        except:
+            pass
+
+#    min_len = min([len(ts) for ts in tick_data])
+#    tick_ids = []
+#    for i, ts in enumerate(tick_data):
+#        ts_len = len(ts)
+#        truncated_dates = ts.dates[ts_len - min_len:]
+#        truncated_data = ts.data[ts_len - min_len:]
+#        tick_id = ts.tick_id
+#        truncated_ts = TickTimeSeries(truncated_dates, truncated_data, tick_id)
+#        tick_data[i] = truncated_ts
+#        tick_data[i].sort()
+#        tick_ids.append(tick_id)
+
+    return result_ids, tick_data
+
 def alignTickData(tick_data, col="final_v", norm=True):
     """aligh every tick data
     
@@ -291,7 +378,7 @@ def alignTickData(tick_data, col="final_v", norm=True):
     """
     
     if norm:
-        dfs = [pd.DataFrame(t[col] * t.unit_amount, 
+        dfs = [pd.DataFrame(t[col] * t.unit_amount,
                         columns=[str(t.tick_id)]) for t in tick_data]
     else:
         dfs = [pd.DataFrame(t[col],
