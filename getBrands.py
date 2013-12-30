@@ -3,7 +3,7 @@ import jsm
 from multiprocessing import Process, Queue
 import pymongo
 
-mongo_info= {"host":"localhost", "port":27017, "db":"jp_stock", "collection":"brands"}
+mongo_info= {"host":"localhost", "port":27017, "db":"jp_stock", "collection":"tick_info"}
 
 class BrandDownloadProcess(Process):
     def __init__(self, input_queue, error_queue):
@@ -17,8 +17,8 @@ class BrandDownloadProcess(Process):
         ret = self.q.get_brand(brand_id)
         col = self.con[mongo_info["db"]][mongo_info["collection"]]
         for r in ret:
-            key = {"brand":brand_id}
-            data = {"$set":{"tick_id":r.ccode, "market":r.market, "name":r.name, "info":r.info}}
+            key = {"tick_id":r.ccode}
+            data = {"$set":{"brand_id":brand_id, "market":r.market, "name":r.name, "info":r.info}}
             col.update(key, data, upsert=True)
         
     def run(self):
