@@ -7,6 +7,7 @@ Created on Jun 16, 2013
 import numpy as np
 import pandas as pd
 import requests
+import time
 
 def shift_stack(x, name, dates=None, start_lag=0, end_lag=5):
     x = pd.TimeSeries(x)
@@ -29,3 +30,14 @@ def initSession():
     session.headers["Connection"] = "Keep-Alive"
     session.headers["User-Agent"] = _user_agent
     return session
+
+def dump_queue(queue):
+    """
+    Empties all pending items in a queue and returns them in a list.
+    """
+    result = []
+
+    while not queue.empty():
+        result.append(queue.get())
+        
+    return result

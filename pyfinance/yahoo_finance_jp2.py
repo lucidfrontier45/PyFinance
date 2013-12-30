@@ -31,3 +31,5 @@ def getTick(code, session=None, end_date=None, start_date=None, length=500):
     tick_data = TickTimeSeries(prices, tick_id=code, index=dates)
     tick_data.fix_split()
     return tick_data
+
+    

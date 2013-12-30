@@ -7,6 +7,7 @@ from BeautifulSoup import BeautifulSoup
 from .tick_timeseries import TickTimeSeries, TickerCodeError, _str2date
 from .utils import initSession
 
+
 # yahoo finance jp uses currently EUC-JP encoding
 enc = "euc-jp"
 
@@ -169,7 +170,6 @@ def getTick(code, session=None, end_date=None, start_date=None, length=500):
     tick_data = TickTimeSeries(data, tick_id=code, index=dates, unit_amount=unit_amount)
     tick_data.fix_split()
     return tick_data
-
 
 def dumpUnitAmountToSQL(codes, db_name):
     con = sqlite3.connect(db_name)
