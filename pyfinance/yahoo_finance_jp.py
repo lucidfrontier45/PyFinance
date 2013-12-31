@@ -163,12 +163,11 @@ def getTick(code, session=None, end_date=None, start_date=None, length=500):
     if ts[0] == []:
         raise TickerCodeError, "Ticker Code %s not found" % code
 
-    # get unit amount
-    unit_amount = _getUnitAmount(code, session)
+#     # get unit amount
+#     unit_amount = _getUnitAmount(code, session)
     
     dates, data = ts[0], ts[1]
-    tick_data = TickTimeSeries(data, tick_id=code, index=dates, unit_amount=unit_amount)
-    tick_data.fix_split()
+    tick_data = TickTimeSeries(data, tick_id=code, index=dates)
     return tick_data
 
 def dumpUnitAmountToSQL(codes, db_name):

@@ -33,6 +33,7 @@ class TickTimeSeries(DataFrame):
         self.tick_id = tick_id
         self.sort(inplace=True)
         self.unit_amount = unit_amount
+        self.fix_split()
         
     @property
     def _constructor(self):
@@ -99,7 +100,7 @@ class TickTimeSeries(DataFrame):
         con = pymongo.MongoClient(host=host, port=port)
         col = con[db][collection]
         for i in xrange(len(self)):
-            date = self.index[i]
+            date = datetime.datetime(*self.index[i].timetuple()[:3])
             data = self.ix[i]
             d = {"date":date, "date_s":date.strftime(_date_fmt), "tick_id":self.tick_id}
             d.update(zip(data.keys(), data.values))
@@ -290,25 +291,15 @@ def getTickDataFromSQL(tick_ids=[], db_name=None, size=-1,
 
 def _getOneTickDataFromMongoDB(tick_id, host="localhost", port=27017, db="jp_stock", collection="prices", size=0,
                            begin_date=None, end_date=None):
-    tick_id = int(tick_id)
+    tick_id = tick_id
     con = pymongo.MongoClient(host=host, port=port)
     col = con[db][collection]
 
-#     # first check if the requested tick_id exists
-#     sql_cmd = "SELECT unit_amount FROM ticklist WHERE tick_id=?"
-#     iid = con.execute(sql_cmd, (tick_id,)).fetchone()
-#     if iid == None:
-#         con.close()
-#         raise TickerCodeError, "Ticker Code %d not found" % tick_id
-#     else:
-#         unit_amount = iid[0]
-#         
-# 
-
+    # first check if the requested tick_id exists
     request = {"tick_id":tick_id}
-    cursor = col.find(request).limit(1)
+    cursor = col.find(request)
     if cursor.count() < 1:
-        raise TickerCodeError, "Ticker Code %d not found" % tick_id
+        raise TickerCodeError, "Ticker Code %s not found" % tick_id
     
     if begin_date or end_date:
         request["$and"] = []
@@ -327,7 +318,7 @@ def _getOneTickDataFromMongoDB(tick_id, host="localhost", port=27017, db="jp_sto
     dates = []
     data = []
     for r in cursor:
-        dates.append(r["date"])
+        dates.append(r["date"].date())
         data.append([r[key] for key in _col_names ])
     print len(data)
 
@@ -362,6 +353,12 @@ def getTickDataFromMongoDB(tick_ids=[], host="localhost", port=27017, db="jp_sto
 #        tick_ids.append(tick_id)
 
     return result_ids, tick_data
+
+def getTickIDsFromMongoDB(host="localhost", port=27017, db="jp_stock", collection="tick_info", match={}):
+    con = pymongo.MongoClient(host=host, port=port)
+    col = con[db][collection]
+    tick_ids = sorted(col.find(match).distinct("tick_id"))
+    return tick_ids
 
 def alignTickData(tick_data, col="final_v", norm=True):
     """aligh every tick data
