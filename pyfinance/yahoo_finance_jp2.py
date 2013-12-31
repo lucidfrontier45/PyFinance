@@ -6,9 +6,7 @@ from .tick_timeseries import TickTimeSeries, TickerCodeError, _str2date
 import jsm
 
 def getTick(code, session=None, end_date=None, start_date=None, length=500):
-    code = int(code)
-
-    print "getting data of tikker %d from yahoo finance...  " % code
+    print "getting data of tikker %s from yahoo finance...  " % code
     
     scale = 8.0 / 5.0  # for skipping hollidays
     if end_date == None:

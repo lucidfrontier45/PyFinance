@@ -1,15 +1,20 @@
 #! /usr/bin/python
-# coding=utf-8
+# -*- coding: utf-8 -*-
 
 from sys import argv, exit
-import time
-import sqlite3
 import pyfinance.yahoo_finance_jp as yf
 from pyfinance import tick_timeseries
-from pyfinance.db import initDB, setDBName
 from pyfinance import nikkei225
 from multiprocessing import Process, Queue
 from pyfinance.utils import initSession
+import pymongo
+
+mongo_info= {"host":"localhost", "port":27017, "db":"jp_stock"}
+
+def initDB(host):
+    con = pymongo.MongoClient(host=host) 
+    col = con[mongo_info["db"]]["prices"]
+    col.ensure_index([("date",1), ("tick_id",1)], unique=True, dropDups=True)
 
 def _workf(tick_id, host, session=None):
     ticks = yf.getTick(tick_id, session, length=date_len)
@@ -35,20 +40,21 @@ class TickDownloadProcess(Process):
 
 
 host = argv[1]
+date_len = int(argv[2])
 
 tick_ids = tick_timeseries.getTickIDsFromMongoDB(host=host, match={"market":{"$in":[u"東証1部"]}})
+
+initDB(host)
+
 error_queue = Queue(len(tick_ids))
 result_queue = Queue(len(tick_ids))
 tick_id_queue = Queue(len(tick_ids))
-
-date_len = int(argv[2])
-
 [tick_id_queue.put(i) for i in tick_ids]
-pool = [TickDownloadProcess(host, tick_id_queue, error_queue) for _ in xrange(1)]
+pool = [TickDownloadProcess(host, tick_id_queue, error_queue) for _ in xrange(3)]
 for p in pool:
     p.start()
 for p in pool:
     p.join()
-
+ 
 while not error_queue.empty():
     print error_queue.get()

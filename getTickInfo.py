@@ -7,6 +7,11 @@ import pymongo
 
 mongo_info= {"host":"localhost", "port":27017, "db":"jp_stock", "collection":"tick_info"}
 
+def initDB(host):
+    con = pymongo.MongoClient(host=host) 
+    col = con[mongo_info["db"]][mongo_info["collection"]]
+    col.ensure_index([("tick_id",1)], unique=True, dropDups=True)
+    
 class BrandDownloadProcess(Process):
     def __init__(self, input_queue, error_queue):
         Process.__init__(self)
@@ -119,6 +124,7 @@ def getFinances(n_worker=1):
     return error_list
 
 if __name__ == "__main__":
+    initDB("localhost")
     ret = getBrands(20)
     print ret
     ret = getFinances(20)
