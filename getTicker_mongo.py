@@ -36,7 +36,7 @@ class TickDownloadProcess(Process):
 
 host = argv[1]
 
-tick_ids = tick_timeseries.getTickIDsFromMongoDB(host=host, match={"market":{"$in":[u"東証1部"]}})[:1]
+tick_ids = tick_timeseries.getTickIDsFromMongoDB(host=host, match={"market":{"$in":[u"東証1部"]}})
 error_queue = Queue(len(tick_ids))
 result_queue = Queue(len(tick_ids))
 tick_id_queue = Queue(len(tick_ids))
